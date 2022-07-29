@@ -35,7 +35,7 @@ cqrs:
 
 You can find the [full configuration here](./docs/configuration.md). 
 
-The package contains instances for request decoder, DTO constructor and response constructor. With this you can already use it. You only need to create your own DTO validators, DTO data transformers and handler wrappers when you want to use those. 
+The package contains instances for request decoder, DTO constructor and response constructor. With this you can already use it. You only need to create your own DTO validators, request data transformers and handler wrappers when you want to use those. 
 
 Where and how to use the instances, is described below.
 
@@ -58,20 +58,26 @@ The construct has to following goals:
 
 The construct consists of two starting points, the `CommandController` and the `QueryController` and the following components:
 
-- **[Request decoder](./docs/request-decoder.md)**  
-*Parses the request and transforms it into an array structure.*
-- **[Request data transformer](./docs/request-data-transformer.md)**  
-*Transforms the previously generated array structure.*
-- **[DTO constructor](./docs/dto-constructor.md)**  
-*Generates a command or query from the array structure.*
-- **[DTO validator](./docs/dto-validator.md)**  
+- **Request validator** ([Examples](./docs/examples/request-validator.md))  
+*Validates request on an application level.*
+- **Request decoder [Examples](./docs/examples/request-decoder.md)**  
+*Decodes the request and transforms it into request data as an array structure.*
+- **Request data transformer** ([Examples](./docs/examples/request-data-transformer.md))  
+*Transforms the previously generated request data.*
+- **DTO constructor** ([Examples](./docs/examples/dto-constructor.md))  
+*Generates a command or query from the request data.*
+- **DTO validator** ([Examples](./docs/examples/dto-validator.md))  
 *Validates the created command or query.*
-- **[Handler](./docs/handler.md)**  
+- **Handler** ([Examples](./docs/examples/handler.md))  
 *Command or query handler which contains the business logic.*
-- **[Handler wrapper](./docs/handler-wrapper.md)**  
+- **Handler wrapper** ([Examples](./docs/examples/handler-wrapper.md))  
 *Wraps handler to execute logic as a prepare / try / catch logic.*
-- **[Response constructor](./docs/response-constructor.md)**  
+- **Response constructor** ([Examples](./docs/examples/response-constructor.md))  
 *Transforms the gathered data of the handler into a response.*
+
+The process how the controller handles a request can be and when to use which component is [described here](./docs/process.md).
+
+**Routing**
 
 Through the Symfony routing, we define which instances of the components (if relevant) are used for which route. We use PHP files for the routes instead of the default YAML for more type safety and so that renaming of components is easier through the IDE.
 
@@ -166,18 +172,25 @@ final class CreateNewsArticleCommandHandler implements CommandHandlerInterface
         $requestingUser->mustHavePermissionToWriteArticle();
 
         // Apply
-        $this->createNewsArticle($command, $commandExecutedAt);
+        $this->createNewsArticle(
+            $command->title,
+            $command->content,
+            $command->isPublished,
+            $commandExecutedAt,
+        );
     }
 
     private function createNewsArticle(
-        CreateProductNewsArticleCommand $command,
+        string $title,
+        string $content,
+        bool $isPublished,
         \DateTimeImmutable $commandExecutedAt,
     ): void {
         $newsArticle = new NewsArticle(
             NewsArticleId::generateRandom(),
-            $command->title,
-            $command->content,
-            $command->isPublished,
+            $title,
+            $content,
+            $isPublished,
             $commandExecutedAt,
         );
 

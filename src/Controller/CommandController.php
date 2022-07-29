@@ -12,6 +12,7 @@ use DigitalCraftsman\CQRS\HandlerWrapper\DTO\HandlerWrapperStep;
 use DigitalCraftsman\CQRS\HandlerWrapper\HandlerWrapperInterface;
 use DigitalCraftsman\CQRS\RequestDataTransformer\RequestDataTransformerInterface;
 use DigitalCraftsman\CQRS\RequestDecoder\RequestDecoderInterface;
+use DigitalCraftsman\CQRS\RequestValidator\RequestValidatorInterface;
 use DigitalCraftsman\CQRS\ResponseConstructor\ResponseConstructorInterface;
 use DigitalCraftsman\CQRS\ServiceMap\ServiceMap;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,6 +22,7 @@ use Symfony\Component\HttpFoundation\Response;
 final class CommandController extends AbstractController
 {
     /**
+     * @psalm-param array<int, class-string<RequestValidatorInterface>>|null $defaultRequestValidatorClasses
      * @psalm-param class-string<RequestDecoderInterface>|null $defaultRequestDecoderClass
      * @psalm-param array<int, class-string<RequestDataTransformerInterface>>|null $defaultRequestDataTransformerClasses
      * @psalm-param class-string<DTOConstructorInterface>|null $defaultDTOConstructorClass
@@ -32,6 +34,7 @@ final class CommandController extends AbstractController
      */
     public function __construct(
         private ServiceMap $serviceMap,
+        private ?array $defaultRequestValidatorClasses,
         private ?string $defaultRequestDecoderClass,
         private ?array $defaultRequestDataTransformerClasses,
         private ?string $defaultDTOConstructorClass,
@@ -49,11 +52,20 @@ final class CommandController extends AbstractController
         /** @psalm-suppress MixedArgumentTypeCoercion */
         $configuration = Configuration::fromRoutePayload($routePayload);
 
-        // Get data from request
+        // Validate request
+        $requestValidators = $this->serviceMap->getRequestValidators(
+            $configuration->requestValidatorClasses,
+            $this->defaultRequestValidatorClasses,
+        );
+        foreach ($requestValidators as $requestValidator) {
+            $requestValidator->validateRequest($request);
+        }
+
+        // Get request data from request
         $requestDecoder = $this->serviceMap->getRequestDecoder($configuration->requestDecoderClass, $this->defaultRequestDecoderClass);
         $requestData = $requestDecoder->decodeRequest($request);
 
-        // Transform data
+        // Transform request data
         $requestDataTransformers = $this->serviceMap->getRequestDataTransformers(
             $configuration->requestDataTransformerClasses,
             $this->defaultRequestDataTransformerClasses,
@@ -62,7 +74,7 @@ final class CommandController extends AbstractController
             $requestData = $requestDataTransformer->transformRequestData($configuration->dtoClass, $requestData);
         }
 
-        // Construct command from data
+        // Construct command from request data
         $dtoConstructor = $this->serviceMap->getDTOConstructor($configuration->dtoConstructorClass, $this->defaultDTOConstructorClass);
 
         /** @var Command $command */

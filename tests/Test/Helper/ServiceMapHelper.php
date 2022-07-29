@@ -11,6 +11,7 @@ use DigitalCraftsman\CQRS\HandlerWrapper\HandlerWrapperInterface;
 use DigitalCraftsman\CQRS\Query\QueryHandlerInterface;
 use DigitalCraftsman\CQRS\RequestDataTransformer\RequestDataTransformerInterface;
 use DigitalCraftsman\CQRS\RequestDecoder\RequestDecoderInterface;
+use DigitalCraftsman\CQRS\RequestValidator\RequestValidatorInterface;
 use DigitalCraftsman\CQRS\ResponseConstructor\ResponseConstructorInterface;
 use DigitalCraftsman\CQRS\ServiceMap\ServiceMap;
 use DigitalCraftsman\CQRS\Test\Utility\ServiceLocatorSimulator;
@@ -18,6 +19,7 @@ use DigitalCraftsman\CQRS\Test\Utility\ServiceLocatorSimulator;
 final class ServiceMapHelper
 {
     /**
+     * @param array<int, RequestValidatorInterface>|null       $requestValidators
      * @param array<int, RequestDecoderInterface>|null         $requestDecoders
      * @param array<int, RequestDataTransformerInterface>|null $requestDataTransformers
      * @param array<int, DTOConstructorInterface>|null         $dtoConstructors
@@ -28,6 +30,7 @@ final class ServiceMapHelper
      * @param array<int, ResponseConstructorInterface>|null    $responseConstructors
      */
     public static function serviceMap(
+        ?array $requestValidators = null,
         ?array $requestDecoders = null,
         ?array $requestDataTransformers = null,
         ?array $dtoConstructors = null,
@@ -37,6 +40,11 @@ final class ServiceMapHelper
         ?array $queryHandlers = null,
         ?array $responseConstructors = null,
     ): ServiceMap {
+        $requestValidatorsMap = [];
+        foreach ($requestValidators ?? [] as $requestValidator) {
+            $requestValidatorsMap[$requestValidator::class] = $requestValidator;
+        }
+
         $requestDecodersMap = [];
         foreach ($requestDecoders ?? [] as $requestDecoder) {
             $requestDecodersMap[$requestDecoder::class] = $requestDecoder;
@@ -78,6 +86,7 @@ final class ServiceMapHelper
         }
 
         return new ServiceMap(
+            requestValidators: new ServiceLocatorSimulator($requestValidatorsMap),
             requestDecoders: new ServiceLocatorSimulator($requestDecodersMap),
             requestDataTransformers: new ServiceLocatorSimulator($requestDataTransformersMap),
             dtoConstructors: new ServiceLocatorSimulator($dtoConstructorsMap),

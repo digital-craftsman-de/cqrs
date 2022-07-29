@@ -13,6 +13,7 @@ use DigitalCraftsman\CQRS\Query\Query;
 use DigitalCraftsman\CQRS\Query\QueryHandlerInterface;
 use DigitalCraftsman\CQRS\RequestDataTransformer\RequestDataTransformerInterface;
 use DigitalCraftsman\CQRS\RequestDecoder\RequestDecoderInterface;
+use DigitalCraftsman\CQRS\RequestValidator\RequestValidatorInterface;
 use DigitalCraftsman\CQRS\ResponseConstructor\ResponseConstructorInterface;
 
 /**
@@ -26,6 +27,7 @@ final class Configuration
     /**
      * @psalm-param class-string<Command>|class-string<Query> $dtoClass
      * @psalm-param class-string<CommandHandlerInterface>|class-string<QueryHandlerInterface> $handlerClass
+     * @psalm-param array<int, class-string<RequestValidatorInterface>>|null $requestValidatorClasses
      * @psalm-param class-string<RequestDecoderInterface>|null $requestDecoderClass
      * @psalm-param array<int, class-string<RequestDataTransformerInterface>>|null $requestDataTransformerClasses
      * @psalm-param class-string<DTOConstructorInterface>|null $dtoConstructorClass
@@ -36,6 +38,7 @@ final class Configuration
     private function __construct(
         public string $dtoClass,
         public string $handlerClass,
+        public ?array $requestValidatorClasses = null,
         public ?string $requestDecoderClass = null,
         public ?array $requestDataTransformerClasses = null,
         public ?string $dtoConstructorClass = null,
@@ -48,6 +51,7 @@ final class Configuration
     /**
      * @psalm-param class-string<Command>|class-string<Query> $dtoClass
      * @psalm-param class-string<CommandHandlerInterface>|class-string<QueryHandlerInterface> $handlerClass
+     * @psalm-param array<int, class-string<RequestValidatorInterface>>|null $requestValidatorClasses
      * @psalm-param class-string<RequestDecoderInterface>|null $requestDecoderClass
      * @psalm-param array<int, class-string<RequestDataTransformerInterface>>|null $requestDataTransformerClasses
      * @psalm-param class-string<DTOConstructorInterface>|null $dtoConstructorClass
@@ -58,6 +62,7 @@ final class Configuration
     public static function routePayload(
         string $dtoClass,
         string $handlerClass,
+        ?array $requestValidatorClasses = null,
         ?string $requestDecoderClass = null,
         ?array $requestDataTransformerClasses = null,
         ?string $dtoConstructorClass = null,
@@ -68,6 +73,7 @@ final class Configuration
         $configuration = new self(
             $dtoClass,
             $handlerClass,
+            $requestValidatorClasses,
             $requestDecoderClass,
             $requestDataTransformerClasses,
             $dtoConstructorClass,
@@ -83,6 +89,7 @@ final class Configuration
      * @psalm-param array{
      *   dtoClass: class-string<Command>|class-string<Query>,
      *   handlerClass: class-string<CommandHandlerInterface>|class-string<QueryHandlerInterface>,
+     *   requestValidatorClasses: array<int, class-string<RequestValidatorInterface>>|null,
      *   requestDecoderClass: class-string<RequestDecoderInterface>|null,
      *   requestDataTransformerClasses: array<int, class-string<RequestDataTransformerInterface>>|null,
      *   dtoConstructorClass: class-string<DTOConstructorInterface>|null,
@@ -113,6 +120,7 @@ final class Configuration
         return new self(
             $routePayload['dtoClass'],
             $routePayload['handlerClass'],
+            $routePayload['requestValidatorClasses'],
             $routePayload['requestDecoderClass'],
             $routePayload['requestDataTransformerClasses'],
             $routePayload['dtoConstructorClass'],
@@ -126,6 +134,7 @@ final class Configuration
      * @psalm-return array{
      *   dtoClass: class-string<Command>|class-string<Query>,
      *   handlerClass: class-string<CommandHandlerInterface>|class-string<QueryHandlerInterface>,
+     *   requestValidatorClasses: array<int, class-string<RequestValidatorInterface>>|null,
      *   requestDecoderClass: class-string<RequestDecoderInterface>|null,
      *   requestDataTransformerClasses: array<int, class-string<RequestDataTransformerInterface>>|null,
      *   dtoConstructorClass: class-string<DTOConstructorInterface>|null,
@@ -142,6 +151,7 @@ final class Configuration
         return [
             'dtoClass' => $this->dtoClass,
             'handlerClass' => $this->handlerClass,
+            'requestValidatorClasses' => $this->requestValidatorClasses,
             'requestDecoderClass' => $this->requestDecoderClass,
             'requestDataTransformerClasses' => $this->requestDataTransformerClasses,
             'dtoConstructorClass' => $this->dtoConstructorClass,

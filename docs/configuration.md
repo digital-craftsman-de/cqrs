@@ -7,6 +7,10 @@ cqrs:
 
   command_controller:
 
+    # Classes of the default request validator of command controller when there is none defined for the route
+    default_request_validator_classes:
+      - 'App\CQRS\RequestValidator\GuardAgainstTokenInHeaderRequestValidator'
+
     # Class of the default request decoder of command controller when there is none defined for the route
     default_request_decoder_class: 'DigitalCraftsman\CQRS\RequestDecoder\JsonRequestDecoder'
 
@@ -30,6 +34,10 @@ cqrs:
     default_response_constructor_class: 'DigitalCraftsman\CQRS\ResponseConstructor\EmptyJsonResponseConstructor'
 
   query_controller:
+
+    # Classes of the default request validator of query controller when there is none defined for the route
+    default_request_validator_classes:
+      - 'App\CQRS\RequestValidator\GuardAgainstTokenInHeaderRequestValidator'
     
     # Class of the default request decoder of query controller when there is none defined for the route
     default_request_decoder_class: 'DigitalCraftsman\CQRS\RequestDecoder\JsonRequestDecoder'

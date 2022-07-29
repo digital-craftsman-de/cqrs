@@ -1,6 +1,6 @@
-# DTO constructor
+# DTO constructor examples
 
-The DTO constructor is there to create the command or query from the array structure. The interface looks like following:
+**Interface**
 
 ```php
 interface DTOConstructorInterface
@@ -16,26 +16,29 @@ interface DTOConstructorInterface
 }
 ```
 
+See [position in process](../process.md#dto-constructor)
+
 ## Construction through serializer
 
 A possible implementation of a constructor is one that uses the Symfony serializer like this that is already built-in:
 
 ```php
-final class SerializerJsonResponseConstructor implements ResponseConstructorInterface
+final class SerializerDTOConstructor implements DTOConstructorInterface
 {
     public function __construct(
-        private SerializerInterface $serializer,
+        private DenormalizerInterface $serializer,
     ) {
     }
 
-    public function constructResponse($data, Request $request): JsonResponse
+    /**
+     * @psalm-template T of Command|Query
+     * @psalm-param class-string<T> $dtoClass
+     * @psalm-return T
+     */
+    public function constructDTO(array $requestData, string $dtoClass): Command|Query
     {
-        $content = $this->serializer->serialize($data, JsonEncoder::FORMAT, [
-            AbstractObjectNormalizer::SKIP_NULL_VALUES => true,
-            AbstractObjectNormalizer::PRESERVE_EMPTY_OBJECTS => true,
-        ]);
-
-        return new JsonResponse($content, Response::HTTP_OK, [], true);
+        /** @psalm-var T */
+        return $this->serializer->denormalize($requestData, $dtoClass);
     }
 }
 ```

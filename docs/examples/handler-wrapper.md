@@ -1,12 +1,54 @@
-# Handler wrapper
+# Handler wrapper examples
 
-Handler wrappers are components that allow execution of code before (`prepare`), after success (`then`) and after error (`catch`). Each method has its own priority with which it's executed in relation to other handler wrappers. Through this priority it's possible to have the `prepare` method be called first for one handler wrapper but the `catch` method be triggered last. The priority mirrors the event listener logic from Symfony in that it's `0` as default and can usually range from `-256` to `256`. 
+**Interface**
 
-With handle wrappers it's possible to implement automatic transaction rollbacks, locking of requests or silent exceptions. All things that are generally part of an application layer and not part of the domain.
+```php
+interface HandlerWrapperInterface
+{
+    /**
+     * Triggered right before the handler is triggered.
+     *
+     * @psalm-param array<int, string|int|float|bool>|string|int|float|bool|null $parameters
+     */
+    public function prepare(
+        Command|Query $dto,
+        Request $request,
+        mixed $parameters,
+    ): void;
 
-For now there are no built-in handler wrappers because they are highly dependant of the domain implementation and / or depend on external libraries.
+    /**
+     * Triggered only if the handler was run without exception.
+     *
+     * @psalm-param array<int, string|int|float|bool>|string|int|float|bool|null $parameters
+     */
+    public function then(
+        Command|Query $dto,
+        Request $request,
+        mixed $parameters,
+    ): void;
 
-We still go through a few examples to explain how they are used. 
+    /**
+     * Triggered only when an exception occurred while executing the handler.
+     * The exception must be returned if it's not explicitly the last exception that should be handled.
+     *
+     * @psalm-param array<int, string|int|float|bool>|string|int|float|bool|null $parameters
+     */
+    public function catch(
+        Command|Query $dto,
+        Request $request,
+        mixed $parameters,
+        \Exception $exception,
+    ): ?\Exception;
+
+    public static function preparePriority(): int;
+
+    public static function thenPriority(): int;
+
+    public static function catchPriority(): int;
+}
+```
+
+See [position in process](../process.md#handler-wrapper)
 
 ## Automatic rollback of doctrine transactions
 

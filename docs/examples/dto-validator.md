@@ -1,10 +1,6 @@
-# DTO validator
+# DTO validator examples
 
-DTO validators are there to validate data within the DTO against information on an infrastructure level. It must not be used to validate the integrity of the DTO itself or any of its value objects in it (that's the task of the constructors). It also must not be used to validate any kind of business logic including access validation.
-
-Multiple DTO validators can be applied on each request.
-
-It's quite abstract and more clear with an example. But first, this is the interface for it:
+**Interface**
 
 ```php
 interface DTOValidatorInterface
@@ -14,9 +10,11 @@ interface DTOValidatorInterface
 }
 ```
 
+See [position in process](../process.md#dto-validator)
+
 ## User id validator
 
-A command or query must contain everything relevant to perform it without having to rely on session data in the handlers. Therefore the DTOs must contain a reference to the user that is issuing the request like a $userId. And this is something we can only validate on an infrastructure level where the DTO validators are located and might look like the following:
+A command or query must contain everything relevant to perform it without having to rely on session data in the handlers. Therefore, the DTOs must contain a reference to the user that is issuing the request like a $userId. And this is something we can only validate on an infrastructure level where the DTO validators are located and might look like the following:
 
 ```php
 final class UserIdValidator implements DTOValidatorInterface

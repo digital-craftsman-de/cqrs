@@ -1,6 +1,6 @@
-# Request decoder
+# Request decoder examples
 
-The request decoder parses the incoming request and transforms it into an array structure. Depending on the request, a different request decoder can be used. The interface is very simple.
+**Interface**
 
 ```php
 interface RequestDecoderInterface
@@ -8,6 +8,8 @@ interface RequestDecoderInterface
     public function decodeRequest(Request $request): array;
 }
 ```
+
+See [position in process](../process.md#request-decoder)
 
 ## JSON request decoder
 
@@ -56,7 +58,7 @@ The request decoder will return the following array:
 
 ## Request decoder for GET parameter and security context
 
-Another use case would be accessing data outside of the body. This is needed when we want to get an image through a query that is triggered by the browser when used in an img tag. We obviously can't add any custom body to that request. With the request decoder we can pull information about the user from the security context and add additional information from the GET parameters.
+Another use case would be accessing data outside the body. This is needed when we want to get an image through a query that is triggered by the browser when used in an img tag. We obviously can't add any custom body to that request. With the request decoder we can pull information about the user from the security context and add additional information from the GET parameters.
 
 ```php
 final class UserImageRequestDecoder implements RequestDecoderInterface

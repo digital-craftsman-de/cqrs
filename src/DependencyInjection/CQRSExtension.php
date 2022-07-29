@@ -11,6 +11,7 @@ use DigitalCraftsman\CQRS\HandlerWrapper\HandlerWrapperInterface;
 use DigitalCraftsman\CQRS\Query\QueryHandlerInterface;
 use DigitalCraftsman\CQRS\RequestDataTransformer\RequestDataTransformerInterface;
 use DigitalCraftsman\CQRS\RequestDecoder\RequestDecoderInterface;
+use DigitalCraftsman\CQRS\RequestValidator\RequestValidatorInterface;
 use DigitalCraftsman\CQRS\ResponseConstructor\ResponseConstructorInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -23,6 +24,10 @@ final class CQRSExtension extends Extension
     {
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yaml');
+
+        $container
+            ->registerForAutoconfiguration(RequestValidatorInterface::class)
+            ->addTag('cqrs.request_validator');
 
         $container
             ->registerForAutoconfiguration(RequestDecoderInterface::class)
@@ -61,6 +66,7 @@ final class CQRSExtension extends Extension
         /**
          * @psalm-var array{
          *   query_controller: array{
+         *     default_request_validator_classes: ?array<int, string>,
          *     default_request_decoder_class: ?string,
          *     default_request_data_tranformer_classes: ?array<int, string>,
          *     default_dto_constructor_class: ?string,
@@ -69,6 +75,7 @@ final class CQRSExtension extends Extension
          *     default_response_constructor_class: ?string,
          *   },
          *   command_controller: array{
+         *     default_request_validator_classes: ?array<int, string>,
          *     default_request_decoder_class: ?string,
          *     default_request_data_tranformer_classes: ?array<int, string>,
          *     default_dto_constructor_class: ?string,

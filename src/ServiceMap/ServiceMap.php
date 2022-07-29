@@ -13,6 +13,7 @@ use DigitalCraftsman\CQRS\HandlerWrapper\HandlerWrapperInterface;
 use DigitalCraftsman\CQRS\Query\QueryHandlerInterface;
 use DigitalCraftsman\CQRS\RequestDataTransformer\RequestDataTransformerInterface;
 use DigitalCraftsman\CQRS\RequestDecoder\RequestDecoderInterface;
+use DigitalCraftsman\CQRS\RequestValidator\RequestValidatorInterface;
 use DigitalCraftsman\CQRS\ResponseConstructor\ResponseConstructorInterface;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredCommandHandlerNotAvailable;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredDTOConstructorNotAvailable;
@@ -21,6 +22,7 @@ use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredHandlerWrapperNotAvaila
 use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredQueryHandlerNotAvailable;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredRequestDataTransformerNotAvailable;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredRequestDecoderNotAvailable;
+use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredRequestValidatorNotAvailable;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredResponseConstructorNotAvailable;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\DTOConstructorOrDefaultDTOConstructorMustBeConfigured;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\RequestDecoderOrDefaultRequestDecoderMustBeConfigured;
@@ -33,6 +35,7 @@ use Symfony\Contracts\Service\ServiceProviderInterface;
 final class ServiceMap
 {
     public function __construct(
+        private ServiceProviderInterface $requestValidators,
         private ServiceProviderInterface $requestDecoders,
         private ServiceProviderInterface $requestDataTransformers,
         private ServiceProviderInterface $dtoConstructors,
@@ -42,6 +45,28 @@ final class ServiceMap
         private ServiceProviderInterface $queryHandlers,
         private ServiceProviderInterface $responseConstructors,
     ) {
+    }
+
+    /**
+     * @param array<array-key, class-string<RequestValidatorInterface>>|null $requestValidatorClasses
+     * @param array<array-key, class-string<RequestValidatorInterface>>|null $defaultRequestValidatorClasses
+     *
+     * @return array<array-key, RequestValidatorInterface>
+     */
+    public function getRequestValidators(?array $requestValidatorClasses, ?array $defaultRequestValidatorClasses): array
+    {
+        if ($requestValidatorClasses === null && $defaultRequestValidatorClasses === null) {
+            return [];
+        }
+
+        $selectedRequestValidatorClasses = $requestValidatorClasses ?? $defaultRequestValidatorClasses;
+
+        return array_map(
+            fn (string $requestValidatorClass) => $this->requestValidators->has($requestValidatorClass)
+                ? $this->requestValidators->get($requestValidatorClass)
+                : throw new ConfiguredRequestValidatorNotAvailable($requestValidatorClass),
+            $selectedRequestValidatorClasses,
+        );
     }
 
     /**

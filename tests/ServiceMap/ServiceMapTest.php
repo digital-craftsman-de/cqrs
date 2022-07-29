@@ -7,6 +7,8 @@ namespace DigitalCraftsman\CQRS\ServiceMap;
 use DigitalCraftsman\CQRS\DTO\HandlerWrapperConfiguration;
 use DigitalCraftsman\CQRS\DTOConstructor\SerializerDTOConstructor;
 use DigitalCraftsman\CQRS\RequestDecoder\JsonRequestDecoder;
+use DigitalCraftsman\CQRS\RequestValidator\GuardAgainstFileWithVirusRequestValidator;
+use DigitalCraftsman\CQRS\RequestValidator\GuardAgainstTokenInHeaderRequestValidator;
 use DigitalCraftsman\CQRS\ResponseConstructor\EmptyJsonResponseConstructor;
 use DigitalCraftsman\CQRS\ResponseConstructor\EmptyResponseConstructor;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredCommandHandlerNotAvailable;
@@ -16,6 +18,7 @@ use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredHandlerWrapperNotAvaila
 use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredQueryHandlerNotAvailable;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredRequestDataTransformerNotAvailable;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredRequestDecoderNotAvailable;
+use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredRequestValidatorNotAvailable;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\ConfiguredResponseConstructorNotAvailable;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\DTOConstructorOrDefaultDTOConstructorMustBeConfigured;
 use DigitalCraftsman\CQRS\ServiceMap\Exception\RequestDecoderOrDefaultRequestDecoderMustBeConfigured;
@@ -39,6 +42,7 @@ use DigitalCraftsman\CQRS\Test\Repository\TasksInMemoryRepository;
 use DigitalCraftsman\CQRS\Test\Utility\ConnectionSimulator;
 use DigitalCraftsman\CQRS\Test\Utility\SecuritySimulator;
 use DigitalCraftsman\CQRS\Test\Utility\ServiceLocatorSimulator;
+use DigitalCraftsman\CQRS\Test\Utility\VirusScannerSimulator;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 /** @coversDefaultClass \DigitalCraftsman\CQRS\ServiceMap\ServiceMap */
@@ -67,6 +71,9 @@ final class ServiceMapTest extends AppTestCase
     {
         // -- Arrange & Act & Assert
         new ServiceMap(
+            requestValidators: new ServiceLocatorSimulator([
+                GuardAgainstTokenInHeaderRequestValidator::class => new GuardAgainstTokenInHeaderRequestValidator(),
+            ]),
             requestDecoders: new ServiceLocatorSimulator([
                 CreateTaskRequestDecoder::class => new CreateTaskRequestDecoder(),
                 JsonRequestDecoder::class => new JsonRequestDecoder(),
@@ -98,6 +105,124 @@ final class ServiceMapTest extends AppTestCase
                 EmptyResponseConstructor::class => new EmptyResponseConstructor(),
                 EmptyJsonResponseConstructor::class => new EmptyJsonResponseConstructor(),
             ]),
+        );
+    }
+
+    // -- Request validators
+
+    /**
+     * @test
+     * @covers ::getRequestValidators
+     * @covers ::__construct
+     */
+    public function get_request_validators_works_with_request_validator_classes(): void
+    {
+        // -- Arrange
+        $allRequestValidators = [
+            new GuardAgainstTokenInHeaderRequestValidator(),
+            $guardAgainstFileWithVirusRequestValidator = new GuardAgainstFileWithVirusRequestValidator(new VirusScannerSimulator()),
+        ];
+        $serviceMap = ServiceMapHelper::serviceMap(requestValidators: $allRequestValidators);
+
+        // -- Act
+        $requestValidators = $serviceMap->getRequestValidators(
+            [GuardAgainstFileWithVirusRequestValidator::class],
+            null,
+        );
+
+        // -- Assert
+        self::assertCount(1, $requestValidators);
+        self::assertContains($guardAgainstFileWithVirusRequestValidator, $requestValidators);
+    }
+
+    /**
+     * @test
+     * @covers ::getRequestValidators
+     */
+    public function get_request_validator_works_with_default_request_validator_classes(): void
+    {
+        // -- Arrange
+        $allRequestValidators = [
+            new GuardAgainstTokenInHeaderRequestValidator(),
+            $defaultRequestDataTransformer = new GuardAgainstFileWithVirusRequestValidator(new VirusScannerSimulator()),
+        ];
+        $serviceMap = ServiceMapHelper::serviceMap(requestValidators: $allRequestValidators);
+
+        // -- Act
+        $requestValidators = $serviceMap->getRequestValidators(
+            null,
+            [GuardAgainstFileWithVirusRequestValidator::class],
+        );
+
+        // -- Assert
+        self::assertCount(1, $requestValidators);
+        self::assertContains($defaultRequestDataTransformer, $requestValidators);
+    }
+
+    /**
+     * @test
+     * @covers ::getRequestValidators
+     */
+    public function get_request_validators_works_with_no_dto_validator_classes_and_no_default_request_validator_classes(): void
+    {
+        // -- Arrange
+        $allRequestValidators = [
+            new GuardAgainstTokenInHeaderRequestValidator(),
+            new GuardAgainstFileWithVirusRequestValidator(new VirusScannerSimulator()),
+        ];
+        $serviceMap = ServiceMapHelper::serviceMap(requestValidators: $allRequestValidators);
+
+        // -- Act
+        $requestValidators = $serviceMap->getRequestValidators(
+            null,
+            null,
+        );
+
+        // -- Assert
+        self::assertCount(0, $requestValidators);
+    }
+
+    /**
+     * @test
+     * @covers ::getRequestValidators
+     */
+    public function get_request_validators_fails_when_request_validator_classes_are_not_available(): void
+    {
+        // -- Assert
+        $this->expectException(ConfiguredRequestValidatorNotAvailable::class);
+
+        // -- Arrange
+        $allRequestValidators = [
+            new GuardAgainstTokenInHeaderRequestValidator(),
+        ];
+        $serviceMap = ServiceMapHelper::serviceMap(requestValidators: $allRequestValidators);
+
+        // -- Act
+        $serviceMap->getRequestValidators(
+            [GuardAgainstFileWithVirusRequestValidator::class],
+            null,
+        );
+    }
+
+    /**
+     * @test
+     * @covers ::getRequestValidators
+     */
+    public function get_request_validators_fails_when_default_request_validator_classes_are_not_available(): void
+    {
+        // -- Assert
+        $this->expectException(ConfiguredRequestValidatorNotAvailable::class);
+
+        // -- Arrange
+        $allRequestValidators = [
+            new GuardAgainstTokenInHeaderRequestValidator(),
+        ];
+        $serviceMap = ServiceMapHelper::serviceMap(requestValidators: $allRequestValidators);
+
+        // -- Act
+        $serviceMap->getRequestValidators(
+            null,
+            [GuardAgainstFileWithVirusRequestValidator::class],
         );
     }
 

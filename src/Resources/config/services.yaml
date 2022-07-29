@@ -38,6 +38,7 @@ services:
   # Service map
   DigitalCraftsman\CQRS\ServiceMap\ServiceMap:
     arguments:
+      $requestValidators: !tagged_locator cqrs.request_validator
       $requestDecoders: !tagged_locator cqrs.request_decoder
       $requestDataTransformers: !tagged_locator cqrs.request_data_transformer
       $dtoConstructors: !tagged_locator cqrs.dto_constructor
@@ -52,6 +53,7 @@ services:
     autoconfigure: true
     autowire: true
     arguments:
+      $defaultRequestValidatorClasses: '%cqrs.command_controller.default_request_validator_classes%'
       $defaultRequestDecoderClass: '%cqrs.command_controller.default_request_decoder_class%'
       $defaultRequestDataTransformerClasses: '%cqrs.command_controller.default_request_data_transformer_classes%'
       $defaultDTOConstructorClass: '%cqrs.command_controller.default_dto_constructor_class%'
@@ -64,6 +66,7 @@ services:
     autoconfigure: true
     autowire: true
     arguments:
+      $defaultRequestValidatorClasses: '%cqrs.command_controller.default_request_validator_classes%'
       $defaultRequestDecoderClass: '%cqrs.query_controller.default_request_decoder_class%'
       $defaultRequestDataTransformerClasses: '%cqrs.query_controller.default_request_data_transformer_classes%'
       $defaultDTOConstructorClass: '%cqrs.query_controller.default_dto_constructor_class%'

@@ -8,6 +8,7 @@ use DigitalCraftsman\CQRS\DTO\Configuration;
 use DigitalCraftsman\CQRS\DTO\HandlerWrapperConfiguration;
 use DigitalCraftsman\CQRS\DTOConstructor\SerializerDTOConstructor;
 use DigitalCraftsman\CQRS\RequestDecoder\JsonRequestDecoder;
+use DigitalCraftsman\CQRS\RequestValidator\GuardAgainstFileWithVirusRequestValidator;
 use DigitalCraftsman\CQRS\ResponseConstructor\SerializerJsonResponseConstructor;
 use DigitalCraftsman\CQRS\Test\Application\AddActionIdRequestDataTransformer;
 use DigitalCraftsman\CQRS\Test\Application\UserIdValidator;
@@ -21,6 +22,7 @@ use DigitalCraftsman\CQRS\Test\Helper\ServiceMapHelper;
 use DigitalCraftsman\CQRS\Test\Repository\TasksInMemoryRepository;
 use DigitalCraftsman\CQRS\Test\Utility\LockSimulator;
 use DigitalCraftsman\CQRS\Test\Utility\SecuritySimulator;
+use DigitalCraftsman\CQRS\Test\Utility\VirusScannerSimulator;
 use DigitalCraftsman\CQRS\Test\ValueObject\TaskId;
 use DigitalCraftsman\CQRS\Test\ValueObject\UserId;
 use DigitalCraftsman\Ids\Serializer\IdNormalizer;
@@ -76,6 +78,9 @@ final class QueryControllerTest extends TestCase
 
         $controller = new QueryController(
             ServiceMapHelper::serviceMap(
+                requestValidators: [
+                    new GuardAgainstFileWithVirusRequestValidator(new VirusScannerSimulator()),
+                ],
                 requestDecoders: [
                     new JsonRequestDecoder(),
                 ],
@@ -98,6 +103,7 @@ final class QueryControllerTest extends TestCase
                     new SerializerJsonResponseConstructor($serializer, []),
                 ],
             ),
+            [],
             JsonRequestDecoder::class,
             [],
             SerializerDTOConstructor::class,
@@ -114,6 +120,9 @@ final class QueryControllerTest extends TestCase
         $routePayload = Configuration::routePayload(
             dtoClass: GetTasksQuery::class,
             handlerClass: GetTasksQueryHandler::class,
+            requestValidatorClasses: [
+                GuardAgainstFileWithVirusRequestValidator::class,
+            ],
             requestDataTransformerClasses: [
                 AddActionIdRequestDataTransformer::class,
             ],
@@ -190,6 +199,7 @@ final class QueryControllerTest extends TestCase
                     new SerializerJsonResponseConstructor($serializer, []),
                 ],
             ),
+            [],
             JsonRequestDecoder::class,
             [],
             SerializerDTOConstructor::class,

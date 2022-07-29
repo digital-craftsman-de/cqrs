@@ -8,6 +8,7 @@ use DigitalCraftsman\CQRS\DTO\Configuration;
 use DigitalCraftsman\CQRS\DTO\HandlerWrapperConfiguration;
 use DigitalCraftsman\CQRS\DTOConstructor\SerializerDTOConstructor;
 use DigitalCraftsman\CQRS\RequestDecoder\JsonRequestDecoder;
+use DigitalCraftsman\CQRS\RequestValidator\GuardAgainstFileWithVirusRequestValidator;
 use DigitalCraftsman\CQRS\ResponseConstructor\EmptyJsonResponseConstructor;
 use DigitalCraftsman\CQRS\Test\Application\ConnectionTransactionWrapper;
 use DigitalCraftsman\CQRS\Test\Application\SilentExceptionWrapper;
@@ -23,6 +24,7 @@ use DigitalCraftsman\CQRS\Test\Repository\NewsArticleInMemoryRepository;
 use DigitalCraftsman\CQRS\Test\Utility\ConnectionSimulator;
 use DigitalCraftsman\CQRS\Test\Utility\LockSimulator;
 use DigitalCraftsman\CQRS\Test\Utility\SecuritySimulator;
+use DigitalCraftsman\CQRS\Test\Utility\VirusScannerSimulator;
 use DigitalCraftsman\CQRS\Test\ValueObject\UserId;
 use DigitalCraftsman\Ids\Serializer\IdNormalizer;
 use PHPUnit\Framework\TestCase;
@@ -66,6 +68,9 @@ final class CommandControllerTest extends TestCase
 
         $controller = new CommandController(
             ServiceMapHelper::serviceMap(
+                requestValidators: [
+                    new GuardAgainstFileWithVirusRequestValidator(new VirusScannerSimulator()),
+                ],
                 requestDecoders: [
                     new JsonRequestDecoder(),
                 ],
@@ -88,6 +93,7 @@ final class CommandControllerTest extends TestCase
                     new EmptyJsonResponseConstructor(),
                 ],
             ),
+            [],
             JsonRequestDecoder::class,
             [],
             SerializerDTOConstructor::class,
@@ -107,6 +113,9 @@ final class CommandControllerTest extends TestCase
         $routePayload = Configuration::routePayload(
             dtoClass: CreateNewsArticleCommand::class,
             handlerClass: CreateNewsArticleCommandHandler::class,
+            requestValidatorClasses: [
+                GuardAgainstFileWithVirusRequestValidator::class,
+            ],
             requestDataTransformerClasses: [
                 CreateNewsArticleRequestDataTransformer::class,
             ],
@@ -167,6 +176,7 @@ final class CommandControllerTest extends TestCase
                     new EmptyJsonResponseConstructor(),
                 ],
             ),
+            [],
             JsonRequestDecoder::class,
             [],
             SerializerDTOConstructor::class,
@@ -245,6 +255,7 @@ final class CommandControllerTest extends TestCase
                     new EmptyJsonResponseConstructor(),
                 ],
             ),
+            [],
             JsonRequestDecoder::class,
             [],
             SerializerDTOConstructor::class,

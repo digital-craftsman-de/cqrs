@@ -32,6 +32,8 @@ final class CQRSExtensionTest extends TestCase
         self::assertCount(4, $container->findTaggedServiceIds('cqrs.response_constructor'));
 
         // No data is supplied as config, therefore the parameters are set, but empty
+        /** @psalm-suppress PossiblyInvalidArgument */
+        self::assertCount(0, $container->getParameter('cqrs.query_controller.default_request_validator_classes'));
         self::assertNull($container->getParameter('cqrs.query_controller.default_request_decoder_class'));
         /** @psalm-suppress PossiblyInvalidArgument */
         self::assertCount(0, $container->getParameter('cqrs.query_controller.default_request_data_transformer_classes'));
@@ -42,6 +44,8 @@ final class CQRSExtensionTest extends TestCase
         self::assertCount(0, $container->getParameter('cqrs.query_controller.default_handler_wrapper_classes'));
         self::assertNull($container->getParameter('cqrs.query_controller.default_response_constructor_class'));
 
+        /** @psalm-suppress PossiblyInvalidArgument */
+        self::assertCount(0, $container->getParameter('cqrs.command_controller.default_request_validator_classes'));
         self::assertNull($container->getParameter('cqrs.command_controller.default_request_decoder_class'));
         /** @psalm-suppress PossiblyInvalidArgument */
         self::assertCount(0, $container->getParameter('cqrs.command_controller.default_request_data_transformer_classes'));

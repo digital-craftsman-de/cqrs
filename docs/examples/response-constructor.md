@@ -1,8 +1,6 @@
-# Response constructor
+# Response constructor examples
 
-The response constructor is only relevant for the query. A command will always return an empty response with 204 status code (if no exception is thrown). Depending on the use case, the result returned from the query handler might be serialized to JSON, send as binary data or even be streamed as part of a streamed response.
-
-This is the interface for the response constructor:
+**Interface**
 
 ```php
 interface ResponseConstructorInterface
@@ -11,6 +9,8 @@ interface ResponseConstructorInterface
     public function constructResponse($result, Request $request): Response;
 }
 ```
+
+See [position in process](../process.md#response-constructor)
 
 ## JSON response constructor
 
@@ -56,7 +56,7 @@ final class FileResponseConstructor implements ResponseConstructorInterface
 
 ## Streamed response
 
-There are cases where it's not feasable to return the full response at once. For example when loading a lot of files from an external storage provider and wrapping it into a zip file before sending it to the client. In such a case, the query handler would return a callable like this:
+There are cases where it's not feasible to return the full response at once. For example when loading a lot of files from an external storage provider and wrapping it into a zip file before sending it to the client. In such a case, the query handler would return a callable like this:
 
 ```php
 final class GetAllFilesInDirectoryAsDownloadQueryHandler implements QueryHandlerInterface
@@ -101,7 +101,7 @@ final class GetAllFilesInDirectoryAsDownloadQueryHandler implements QueryHandler
 }
 ```
 
-Such a callable would be send to a simple streamed response constructor:
+Such a callable would be sent to a simple streamed response constructor:
 
 ```php
 final class StreamedResponseConstructor implements ResponseConstructorInterface

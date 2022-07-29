@@ -1,8 +1,6 @@
-# Handler
+# Handler examples
 
-The handlers are now freed to only concern themselves with the business logic. They receive ether a command or query, but only the query returns a result which is later converted into a response.
-
-Those are the two interfaces:
+**Interfaces**
 
 ```php
 interface CommandHandlerInterface
@@ -17,6 +15,8 @@ interface QueryHandlerInterface
     public function handle(Query $query): mixed;
 }
 ```
+
+See [position in process](../process.md#handler)
 
 ## Command handler
 
@@ -51,11 +51,9 @@ final class CreateUserAccountCommandHandler implements CommandHandlerInterface
 }
 ```
 
-How to structure the business logic is described here.
-
 ## Query handler
 
-The query handler always returns a response (if there is no exception). This response can be anything from an `object`, `array` or even a `callable`. When it returns data, it must not return entities, but always custom read models instead. This is an example where the query handler would return a user read model.
+The query handler always returns a value (if there is no exception). This return value can be anything from an `object`, `array` or even a `callable`. When it returns data, it must not return entities, but always custom read models instead. This is an example where the query handler would return a user read model.
 
 ```php
 final class GetUserQueryHandler implements QueryHandlerInterface
